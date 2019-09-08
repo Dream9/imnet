@@ -15,7 +15,7 @@
 #elif defined __GNUC__
 #include"dependent/string_piece.h"
 #include"dependent/types_extension.h"
-#incldue"dependent/logger/timestamp.h"
+#include"dependent/logger/timestamp.h"
 #endif
 
 #include<vector>

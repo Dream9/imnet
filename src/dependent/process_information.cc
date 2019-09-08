@@ -64,7 +64,7 @@ int scanDirent(const char *dirpath, int(*filter)(const struct dirent*)) {
 	//using strcoll(3), the latter using strverscmp(3) on the strings
 	//(*a)->d_name and (*b)->d_name.
 	//
-	int result = ::scandir(dirpath, namelist, filter, ::alphasort);
+	int result = ::scandir(dirpath, &namelist, filter, ::alphasort);
 	//becare:传进来的策略总是全部筛掉
 	assert(namelist == NULL);
 
@@ -82,7 +82,7 @@ const CTimestamp g_process_start_time = CTimestamp::getNow();
 //long sysconf(int name);
 //const long g_clock_ticks = ::sysconf(_SC_CLK_TCK);
 
-const long g_page_size=::sysconf(_SC_PAGESIZE)
+const long g_page_size=::sysconf(_SC_PAGESIZE);
 
 //brief:转调gethostname
 string getHostname() {
