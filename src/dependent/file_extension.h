@@ -52,6 +52,7 @@ private:
 
 //brief:只在文件尾部追加数据
 //     将会为FILE*流主动提供缓冲区
+//     本类可与CLogger配合完成日志的本地存储，(见Logfile实现)
 class Appendfile {
 public:
 	typedef FILE* HandleType;
@@ -65,9 +66,9 @@ public:
 
 	void flush();
 
+	//brief:
 	off_t writtenBytes()const {
-		//TODO:
-		return 0;
+		return __written_bytes;
 	}
 	
 	static const int kBufferSize = 64 * 1024;
