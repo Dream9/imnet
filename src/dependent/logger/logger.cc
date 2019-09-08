@@ -177,6 +177,7 @@ CLogger::~CLogger() {
 	}
 }
 
+//brief:重新设置日志级别
 void CLogger::setLogLevel(LevelType level) {
 	g_logger_level = level;
 }
