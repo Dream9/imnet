@@ -58,7 +58,9 @@ string CTimestamp::toString()const {
 	return buf;
 }
 
-//brief:借助于gmtime_r转换位
+//brief:得到UTC下的年月日时分秒字符串
+//      格式为:"%4d-%02d-%02d %02d:%02d:%02d.%06"或者"%4d-%02d-%02d %02d:%02d:%02d"
+//      借助于gmtime_r转换位
 //parameter:showMicroseconds:是否显示微秒值，默认显示
 string CTimestamp::toUTCString(bool showMicroseconds)const {
 	char buf[32 << 1];

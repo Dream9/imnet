@@ -53,7 +53,6 @@ private:
 
 	string getNextLogfileName(time_t& now);
 
-	static
 	//brief:用于绑定不同策略，主要是针对有锁和无锁两个版本的分离
 	void(Logfile::*__flushFunction)();
 	void(Logfile::*__appendFunction)(const char*, int);

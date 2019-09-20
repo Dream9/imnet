@@ -23,6 +23,9 @@
 #include<cstring>
 #include<cerrno>
 
+//正确日志格式的长度
+static const int kCorrectLengthOfDateFormart = 26;
+
 //追加部分信息
 namespace imnet {
 //brief:线程存储期变量
@@ -113,21 +116,26 @@ void CLogger::CImpl::completePrefix() {
 
 		//TODO: CTimeZone,针对时区进行解析数据
 		if (g_logger_timezone.isValid()) {
-			;
+			g_logger_timezone.localtime_r(seconds,tm_answer);
 		}
 		else {
 			::gmtime_r(&seconds, &tm_answer);
 		}
+
 		int len = snprintf(tl_cache_time, sizeof tl_cache_time, "%4d-%02d-%02d %02d:%02d:%02d.%06d",
-			tm_answer.tm_year + 1990, tm_answer.tm_mon, tm_answer.tm_mday, tm_answer.tm_hour,
+			tm_answer.tm_year + 1900, tm_answer.tm_mon, tm_answer.tm_mday, tm_answer.tm_hour,
 			tm_answer.tm_min, tm_answer.tm_sec, microseconds);
-		assert(len == 26);
+
 		//FIXME:检查len值
+		assert(len == kCorrectLengthOfDateFormart);
 	}
+
 #ifndef IMNET_LOG_OUTPUTNULL
-	_stream << CStringPiece(tl_cache_time, 27) << (g_logger_timezone.isValid() ? "": "Z");
+	//_stream << CStringPiece(tl_cache_time, 27) << (g_logger_timezone.isValid() ? "": "Z");
+	_stream << CStringPiece(tl_cache_time, kCorrectLengthOfDateFormart) << (g_logger_timezone.isValid() ? "": "Z");
 #else
-	_stream << CStringPiece(tl_cache_time, 27);
+	//_stream << CStringPiece(tl_cache_time, 27);
+	_stream << CStringPiece(tl_cache_time, kCorrectLengthOfDateFormart);
 	if (!g_logger_timezone.valid()) {
 		_stream << "Z";
 	}

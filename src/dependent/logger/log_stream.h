@@ -71,7 +71,7 @@ public:
 		}
 #ifndef NDEBUG
 		else {
-			printf("CFixedBuffer::%s::space-overflow,message may lost", __FUNCTION__);
+			fprintf(stderr,"CFixedBuffer::%s::space-overflow,message may lost", __FUNCTION__);
 		}
 #endif
 	}

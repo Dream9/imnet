@@ -36,6 +36,7 @@ Logfile::Logfile(const string& process_name,
 	if (need_mutex) {
 		__flushFunction = &Logfile::__flush;
 		__appendFunction = &Logfile::__append;
+		__mutex.reset(new Mutex);//初始化之
 	}
 	else {
 		__flushFunction = &Logfile::__flush_without_lock;
@@ -95,7 +96,9 @@ void Logfile::__flush_without_lock() {
 void Logfile::__flush() {
 	assert(__mutex);
 	MutexUnique_lock u_lock(*__mutex);
-	__flush();
+	//BUG
+	//__flush();
+	__flush_without_lock();
 }
 
 //brief:滚动日志文件，包括基于事件的时间触发以及基于事件的大小触发
