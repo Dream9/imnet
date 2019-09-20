@@ -31,29 +31,44 @@ struct AuxiliaryThreadTask {
 	using SelfType = AuxiliaryThreadTask;
 
 	ThreadFunctionType task;
-	const string* ptr_name;
+
+	//becare:必须采用拷贝的方式，否则存在执行任务与Thread对象生命期竞争的问题
+	//const string* ptr_name;
+	const string ptr_name;
+
+	//becare:以下两个是没有个问题，因为一方面需要向Thread对象更新状态，另一方面有countdown_latch进行同步
 	pid_t* ptr_tid;
 	CountdownLatch* ptr_latch;
 
-	AuxiliaryThreadTask(const ThreadFunctionType& func,const string* name, pid_t* ptid,CountdownLatch* latch)
+	//becare:防止生命期竞争，资源需要单独拷贝一份
+	//AuxiliaryThreadTask(const ThreadFunctionType& func,const string* name, pid_t* ptid,CountdownLatch* latch)
+	//	:task(func),ptr_name(name),ptr_tid(ptid),ptr_latch(latch){
+	//}
+	AuxiliaryThreadTask(const ThreadFunctionType& func,const string name, pid_t* ptid,CountdownLatch* latch)
 		:task(func),ptr_name(name),ptr_tid(ptid),ptr_latch(latch){
 	}
+	
 	//becare:当传入临时性质的func(或者通过std::move强制转换到右值)调用，对于后者，务必保证不在未重新初始化后就再次使用
-	AuxiliaryThreadTask(ThreadFunctionType&& func,const string* name, pid_t* ptid,CountdownLatch* latch)
+	//      资源重新拷贝
+	//AuxiliaryThreadTask(ThreadFunctionType&& func,const string* name, pid_t* ptid,CountdownLatch* latch)
+	//	:task(std::move(func)),ptr_name(name),ptr_tid(ptid),ptr_latch(latch){
+	//}
+	AuxiliaryThreadTask(ThreadFunctionType&& func,const string name, pid_t* ptid,CountdownLatch* latch)
 		:task(std::move(func)),ptr_name(name),ptr_tid(ptid),ptr_latch(latch){
 	}
-
+	
 
 	//brief:修改线程有关的属性，并进行task的调度
 	void schedule() {
 		//更改tid,唤醒调用线程
 		*ptr_tid = imnet::thread_local_variable::gettid();
 		ptr_latch->countDown();
+		//放弃句柄
 		ptr_tid = nullptr;
 		ptr_latch = nullptr;
 
 		//更改名称
-		imnet::thread_local_variable::tl_thread_name = ptr_name->empty() ? "IMNET Threead" : ptr_name->c_str();
+		imnet::thread_local_variable::tl_thread_name = ptr_name.empty() ? "IMNET Threead" : ptr_name.c_str();
 		::prctl(PR_SET_NAME, imnet::thread_local_variable::tl_thread_name);
 
 		//task调度以及异常捕捉
@@ -63,20 +78,20 @@ struct AuxiliaryThreadTask {
 		}
 		catch (const ImnetException& e) {
 			imnet::thread_local_variable::tl_thread_name = "crashed";
-			fprintf(stderr, "Thread:%s is crashed\n", ptr_name->c_str());
+			fprintf(stderr, "Thread:%s is crashed\n", ptr_name.c_str());
 			fprintf(stderr, "reason:%s\n", e.what());
 			fprintf(stderr, "stackTrace:%s\n", e.backtrace());
 			abort();
 		}
 		catch (const std::exception& e) {
 			imnet::thread_local_variable::tl_thread_name = "crashed";
-			fprintf(stderr, "Thread:%s crashed\n", ptr_name->c_str());
+			fprintf(stderr, "Thread:%s crashed\n", ptr_name.c_str());
 			fprintf(stderr, "reason:%s\n", e.what());
 			abort();
 		}
 		catch (...) {
 			imnet::thread_local_variable::tl_thread_name = "crashed";
-			fprintf(stderr, "Thread:%s is crashed by unknown reason\n", ptr_name->c_str());
+			fprintf(stderr, "Thread:%s is crashed by unknown reason\n", ptr_name.c_str());
 			throw;
 		}
 	}
@@ -84,7 +99,14 @@ struct AuxiliaryThreadTask {
 
 //brief:外部的调用例程,为了适应void*(void*)的ptread_create的接口
 void* startSchedule(void* data) {
-	reinterpret_cast<AuxiliaryThreadTask*>(data)->schedule();
+	assert(data);
+
+	AuxiliaryThreadTask *ptr = reinterpret_cast<AuxiliaryThreadTask*>(data);
+	ptr->schedule();
+
+	//becare:必须采用堆上对象，确保生命期
+	delete(ptr);
+
 	return NULL;
 }
 
@@ -133,14 +155,26 @@ void Thread::start() {
 	assert(__stared == false);
 	__stared = true;
 
-	detail::AuxiliaryThreadTask att(std::move(__task), &__name, &__tid, &__countdown_latch);
-	if (pthread_create(&__ptid, NULL, &detail::startSchedule, &att)) {
+	//becare:这种实现是错误的，存在生命期与函数调用的竞争
+	//detail::AuxiliaryThreadTask att(std::move(__task), &__name, &__tid, &__countdown_latch);
+	//由于pthread_create要求工作函数的参数为void*,否则直接参数传递进去(完全拷贝一份)就是安全的了
+	//但如果采用指针，只能用堆上空间保证其生命期
+	//detail::AuxiliaryThreadTask att(std::move(__task), &__name, &__tid, &__countdown_latch);
+	//注意这种实现下，是认为__task对象在Thread中已经不会有作用了
+	detail::AuxiliaryThreadTask *ptr_parameter = new detail::AuxiliaryThreadTask(std::move(__task), __name, &__tid, &__countdown_latch);
+	
+	if (pthread_create(&__ptid, NULL, &detail::startSchedule, ptr_parameter)) {
 		//pthread_create调用失败
 		__stared = false;
+
+		//becare:调用失败，则有Thread对象负责释放资源
+		delete ptr_parameter;
+
 		LOG_SYSFATAL << "pthread_create() failed";
 	}
 	else {
 		//等待子线程设置tid结束，防止竞态
+		//这里最关键的目的在于确保__tid设置
 		__countdown_latch.wait();
 		assert(__tid > 0);
 	}
