@@ -23,9 +23,12 @@ timezone_test:timezone_test.cc
 	$(XX) $(FLAG) -o timezone_test.ef $^ $(LINKARCHIVE) 
 
 logger_test:logger_test.cc
-	$(XX) $(FLAG) -o logger_test.ef $^ $(LINKARCHIVE)
+	$(XX) $(FLAG) -o logger_test.ef $^ $(LINKARCHIVE) 
 
-target:timezone_test
+logfile_test:logfile_test.cc
+	$(XX) $(FLAG) -o logfile_test.ef $^ $(LINKARCHIVE) -lpthread
+
+target:timezone_test logger_test
 	@echo Done!
 
 .PHONY :clean
