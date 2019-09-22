@@ -28,7 +28,10 @@ logger_test:logger_test.cc
 logfile_test:logfile_test.cc
 	$(XX) $(FLAG) -o logfile_test.ef $^ $(LINKARCHIVE) -lpthread
 
-target:timezone_test logger_test
+asynclogger_test:asynclogger_test.cc
+	$(XX) $(FLAG) -o asynclogger_test.ef $^ $(LINKARCHIVE) -lpthread
+
+target:timezone_test logger_test logfile_test asynclogger_test
 	@echo Done!
 
 .PHONY :clean
