@@ -81,7 +81,7 @@ public:
 	AsyncLogger(const string& basename, int threshold_roll_file_size, int flush_interval=3);
 	~AsyncLogger();
 
-	void write(const char *content, size_t len);
+	void append(const char *content, size_t len);
 
 	void startBackend() {
 		__is_running = true;

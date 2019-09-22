@@ -37,7 +37,7 @@ AsyncLogger::AsyncLogger(const string &basename,int threshold_roll_file_size,int
 
 //brief:前端向后端写入数据接口
 //becare应该保证len==strlen(content)
-void AsyncLogger::write(const char* content, size_t len) {
+void AsyncLogger::append(const char* content, size_t len) {
 	imnet::MutexUnique_lock lock_logger(__mutex);
 	if (__frontend_current_buffer->getUnusedSize() > static_cast<int>(len)) {
 		//未写满时，之前丢入到当前缓冲区中
@@ -53,7 +53,8 @@ void AsyncLogger::write(const char* content, size_t len) {
 			__frontend_current_buffer.reset(new BufferType);
 		}
 		__frontend_current_buffer->append(content, len);
-		__cond.wait();
+		//__cond.wait();//BUG
+		__cond.notify();
 	}
 }
 
