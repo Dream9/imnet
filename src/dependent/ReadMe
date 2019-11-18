@@ -1,1 +1,6 @@
-依赖文件
+基础功能库
+
+dependent
+├─advanced//pthread线程封装，原子操作封装，高级并发部件
+└─logger//日志相关
+//其他通用功能库
