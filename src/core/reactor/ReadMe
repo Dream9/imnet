@@ -1,0 +1,14 @@
+Reactor模式的实现
+
+主要目标是实现一个one-loop-per-thread的Reactor模式
+
+
+1.EventloopThread创建一个线程，执行eventloop循环;
+2.Eventloop通过poller检测事件发生，并交由channel进行分发处理，
+同时利用eventfd检测外部事件，并处理工作队列中的任务;
+3.Poller负责多路转接，维护用户关心的事件，以及同channel之间的关联，
+在阻塞返回后负责将激活的事件传递给Eventloop;
+4.Channel负责事件的最终分发处理，通过bind-function,为不同事件注册回调函数
+5.TimerWorkQueue利用timefd检测超时事件，唤醒poller,
+并借助于Channel分发事件处理
+
