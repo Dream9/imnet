@@ -42,7 +42,9 @@ httpd_server_test:httpd_server_test.cc
 	$(XX) $(FLAG) -o httpd_server_test.ef $^ $(LINKARCHIVE) -lpthread
 
 dreamn:dreamn.cc
-	$(XX) $(FLAG) -o dreamn.ef $^ $(LINKARCHIVE) -lpthread
+	$(XX) $(FLAG) -I/mnt/share/Dreamn/DreamSE/src/query -I/mnt/share/Dreamn/DreamSE/src/utils\
+		-I/mnt/share/Dreamn/DreamSE/src/index -L/mnt/share/Dreamn/DreamSE/src/lib \
+		-o dreamn.ef $^ $(LINKARCHIVE) -ldream-search -lpthread
 
 target: $(TestTarget)
 	mv *.ef $(BINPATH)/
