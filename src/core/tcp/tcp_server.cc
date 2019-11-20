@@ -68,8 +68,10 @@ TcpServer::~TcpServer() {
 	}
 }
 
-//brief:设置线程数，仅在未启动前有效
-inline void TcpServer::setThreadInitCallback(const ThreadInitCallbackType& callback) {
+//brief:设置线程初始化历程，仅在未启动前有效,比如切换工作目录之类的
+//becare:慎重inline
+//inline void TcpServer::setThreadInitCallback(const ThreadInitCallbackType& callback) {
+void TcpServer::setThreadInitCallback(const ThreadInitCallbackType& callback) {
 	//__on_thread_init_call = callback;
 	__thread_pool->setThreadInitCallback(callback);
 }
