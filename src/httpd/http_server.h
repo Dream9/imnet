@@ -19,6 +19,7 @@ namespace imnet {
 namespace core{
 
 class Buffer;
+class Eventloop;
 
 }
 
@@ -32,6 +33,7 @@ void defaultHttpService(const HttpRequest&, HttpResponse*);
 class HttpServer :noncopyable {
 public:
 	typedef std::function <void(const HttpRequest&, HttpResponse*)> HttpServiceCallbackType;
+	typedef std::function < void(core::Eventloop*)> ThreadInitCallbackType;
 
 	HttpServer(core::Eventloop* loop, const string& name, const core::Sockaddr& address, HttpServiceCallbackType = defaultHttpService);
 
@@ -41,6 +43,10 @@ public:
 
 	void setServiceCallback(const HttpServiceCallbackType& call) {
 		__service_call = call;
+	}
+
+	void setThreadInitCallback(const ThreadInitCallbackType& call){
+		__server.setThreadInitCallback(call);
 	}
 
 	void setThreadNumber(int number) {
